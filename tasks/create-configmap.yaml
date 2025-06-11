@@ -1,0 +1,51 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: create-configmap
+spec:
+  displayName: Create configmap
+  params:
+    - name: configmap
+      type: string
+      description: The name of the configmap to create
+    - name: namespace
+      type: string
+      description: the name of the namespace the configmap will reside in
+    - name: data
+      description: the data to use for the configmap
+  workspaces:
+    - name: configmap-workspace
+      optional: true
+  steps:
+    - name: apply-kubernetes-manifest
+      image: quay.io/openshift/origin-cli:4.16
+      script: |
+        #!/bin/sh
+
+        if [ "$(workspaces.configmap-workspace.bound)" == "true" ] ; then
+          TMP_FILE=$(workspaces.configmap-workspace.path)/data.yaml
+        else
+          TMP_FILE="/tmp/data.yaml"
+        fi
+
+        echo "Creating ConfigMap with dynamic keys"
+
+        cat <<EOF > "$TMP_FILE"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: $(params.configmap)
+          namespace: $(params.namespace)
+        data:
+        EOF
+
+        # Append each key-value line, properly indented
+        echo "$(params.data)" | while IFS= read -r line; do
+          echo "  $line" >> "$TMP_FILE"
+        done
+
+        echo "--- Final ConfigMap ---"
+        cat "$TMP_FILE"
+
+        oc apply -f $TMP_FILE
