@@ -15,6 +15,9 @@ spec:
     - name: cloud-pak-deployer-version
       type: string
       description: The container version of the cloud pak deployer to use
+    - name: status-pvc
+      type: string
+      description: the pvc to mount status updates to
   steps:
     - name: apply-kubernetes-manifest
       image: quay.io/openshift/origin-cli:4.16
@@ -75,7 +78,7 @@ spec:
                   name: cloud-pak-deployer-config
               - name: status-volume
                 persistentVolumeClaim:
-                  claimName: cloud-pak-deployer-status
+                  claimName: $(params.status-pvc)
         EOF
 
         sleep 20
