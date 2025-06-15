@@ -60,3 +60,16 @@ tasks:
         value: $(params.deployer-sa)
       - name: namespace
         value: $(params.deployer-namespace)
+  - name: get-tz-ibm-entitlement-key
+    displayName: Get the TZ ibm entitlement key
+    runAfter:
+      - bind-cr-for-sa
+    params:
+      - name: KEY_ID
+        value: 968d7819-f2c5-7b67-c420-3c6bfd51521e
+      - name: SECRETS_MANAGER_ENDPOINT_URL
+        value: >-
+          https://afa20521-cd75-4864-843f-e59fd0ffd49d.us-south.secrets-manager.appdomain.cloud
+    taskRef:
+      kind: Task
+      name: ibmcloud-secrets-manager-get
