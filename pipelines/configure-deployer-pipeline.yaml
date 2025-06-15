@@ -1,0 +1,62 @@
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: configure-deployer
+spec:
+  params:
+    - name: deployer-namespace
+      type: string
+      default: "cloud-pak-deployer"
+    - name: deployer-sa
+      type: string
+      default: "cpd-sa"
+tasks:
+  - name: create-namespace-for-cloud-pak-deployer
+    displayName: Create Namespace For Cloud Pak Deployer
+    taskRef:
+      kind: Task
+      name: create-namespace
+    params:
+      - name: namespace
+        value: $(params.deployer-namespace)
+  - name: create-sa-for-cp-deployer
+    displayName: Create Service Account for Cloud Pak Deployer
+    runAfter:
+      - create-namespace-for-cloud-pak-deployer
+    taskRef:
+      kind: Task
+      name: create-service-account
+    params:
+      - name: namespace
+        value: $(params.deployer-namespace)
+      - name: sa
+        value: $(params.deployer-sa)
+  - name: bind-scc-for-sa
+    displayName: Bind the privileged SCC for the cloud pak deployer sa
+    runAfter:
+      - create-sa-for-cp-deployer
+    taskRef:
+      kind: Task
+      name: create-scc-rolebinding
+    params:
+      - name: scc
+        value: privileged
+      - name: sa
+        value: $(params.deployer-sa)
+      - name: namespace
+        value: $(params.deployer-namespace)
+  - name: bind-cr-for-sa
+    displayName: Bind the cluster admin privileges for cloud pak deployer sa
+    runAfter:
+      - bind-scc-for-sa
+    taskRef:
+      kind: Task
+      name: create-cr-rolebinding
+    params:
+      - name: cr
+        value: cluster-admin
+      - name: sa
+        value: $(params.deployer-sa)
+      - name: namespace
+        value: $(params.deployer-namespace)

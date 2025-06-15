@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: populate-cp4d
+  name: prepare-cp4d-configmap
 spec:
   params:
     - name: overrides
@@ -30,7 +30,17 @@ spec:
         yq ea '
           select(fileIndex == 0) as $base |
           select(fileIndex == 1) as $over |
+
+          # Merge global_config
+          $base.global_config *= ($over.global_config) |
+
+          # Merge openshift[0]
+          $base.openshift[0] *= ($over.openshift[0]) |
+
+          # Merge cp4d[0] without overwriting cartridges
           $base.cp4d[0] *= ($over.cp4d[0] | with_entries(select(.key != "cartridges"))) |
+
+          # Merge cartridges array by name
           $base.cp4d[0].cartridges = (
             $base.cp4d[0].cartridges
             | map(
@@ -38,6 +48,7 @@ spec:
                 ($over.cp4d[0].cartridges // [] | map(select(.name == $b.name)) | .[0]) // {} * $b
               )
           ) |
+
           $base
         ' "$BASE" /tmp/overrides.yaml > $(workspaces.shared-workspace.path)/cp4d.yaml
         echo "Final merged YAML written to: $(workspaces.shared-workspace.path)/cp4d.yaml"
