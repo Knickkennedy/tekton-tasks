@@ -11,6 +11,12 @@ spec:
     - name: deployer-sa
       type: string
       default: "cpd-sa"
+    - name: ibm-entitlement-key
+      type: string
+      default: ""
+    - name: cloudpak
+      type: string
+      default: ""
 tasks:
   - name: create-namespace-for-cloud-pak-deployer
     displayName: Create Namespace For Cloud Pak Deployer
@@ -73,3 +79,38 @@ tasks:
     taskRef:
       kind: Task
       name: ibmcloud-secrets-manager-get
+  - name: create-ibm-entitlement-secret
+    displayName: Create the IBM Entitlement Secret for Cloud Pak Deployer
+    runAfter:
+      - get-tz-ibm-entitlement-key
+    params:
+      - name: ibm-entitlement-key
+        value: $(params.ibm-entitlement-key)
+      - name: tz-ibm-entitlement-key
+        value: $(tasks.get-tz-ibm-entitlement-key.results.secret-value)
+      - name: namespace
+        value: $(params.namespace)
+  - name: deploy-cp4d
+    taskRef:
+      kind: Pipeline
+      name: deployer-cp4d-pipeline
+    when:
+      - input: $(params.cloudpak)
+        operator: in
+        values: ["cp4d"]
+  - name: deploy-cp4i
+    taskRef:
+      kind: Pipeline
+      name: deployer-cp4i-pipeline
+    when:
+      - input: $(params.cloudpak)
+        operator: in
+        values: ["cp4i"]
+  - name: deploy-cp4ba
+    taskRef:
+      kind: Pipeline
+      name: deployer-cp4ba-pipeline
+    when:
+      - input: $(params.cloudpak)
+        operator: in
+        values: ["cp4ba"]
