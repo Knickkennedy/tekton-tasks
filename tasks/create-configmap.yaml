@@ -3,7 +3,6 @@ kind: Task
 metadata:
   name: create-configmap
 spec:
-  displayName: Create configmap
   params:
     - name: configmap
       type: string

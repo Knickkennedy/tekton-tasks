@@ -4,7 +4,6 @@ kind: Task
 metadata:
   name: create-pvc
 spec:
-  displayName: Create pvc
   params:
     - name: pvc
       type: string

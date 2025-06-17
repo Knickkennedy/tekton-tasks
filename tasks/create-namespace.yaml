@@ -4,7 +4,6 @@ kind: Task
 metadata:
   name: create-namespace
 spec:
-  displayName: Create Namespace
   params:
     - name: namespace
       type: string

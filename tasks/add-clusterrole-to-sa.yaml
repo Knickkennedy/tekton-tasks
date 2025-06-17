@@ -4,7 +4,6 @@ kind: Task
 metadata:
   name: create-cr-rolebinding
 spec:
-  displayName: Create a rolebinding for an existing cluster role
   params:
     - name: cr
       type: string

@@ -4,7 +4,6 @@ kind: Task
 metadata:
   name: create-scc-rolebinding
 spec:
-  displayName: Create a rolebinding for an existing scc
   params:
     - name: scc
       type: string

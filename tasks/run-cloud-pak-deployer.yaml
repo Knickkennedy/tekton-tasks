@@ -2,9 +2,8 @@
 apiVersion: tekton.dev/v1
 kind: Task
 metadata:
-  name: create-configmap
+  name: run-cloud-pak-deployer
 spec:
-  displayName: Create configmap
   params:
     - name: configmap
       type: string
