@@ -30,14 +30,6 @@ spec:
       type: string
   workspaces:
     - name: shared-configuration
-      volumeClaimTemplate:
-        metadata:
-          name: shared-config
-        spec:
-          accessModes: ["ReadWriteMany"]
-          resources:
-            requests:
-              storage: 1Gi
   tasks:
     - name: create-namespace-for-cloud-pak-deployer
       displayName: Create Namespace For Cloud Pak Deployer
@@ -106,7 +98,7 @@ spec:
         - get-tz-ibm-entitlement-key
       taskRef:
         kind: Task
-        name: ibmcloud-secrets-manager-get
+        name: create-ibm-entitlement-secret
       params:
         - name: ibm-entitlement-key
           value: $(params.ibm-entitlement-key)
@@ -181,6 +173,9 @@ spec:
         - name: cloud-pak-deployer-version
           value: latest
         - name: status-pvc
+          value: $(params.deployer-pvc)
+        - name: deployer-sa
+          value: $(params.deployer-sa)
     - name: deploy-cp4i
       displayName: Deploy Cloud Pak for Integration
       runAfter:

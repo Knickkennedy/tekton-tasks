@@ -17,9 +17,12 @@ spec:
     - name: status-pvc
       type: string
       description: the pvc to mount status updates to
+    - name: deployer-sa
+      type: string
+      description: The name of the service account to use
   steps:
     - name: apply-kubernetes-manifest
-      image: quay.io/openshift/origin-cli:4.16
+      image: quay.io/congxdev/ibm-pak-ubi:latest
       script: |
         oc delete job cloud-pak-deployer -n $(params.namespace) --ignore-not-found
 
@@ -70,11 +73,11 @@ spec:
               restartPolicy: Never
               securityContext:
                 runAsUser: 0
-              serviceAccountName: cloud-pak-deployer-sa
+              serviceAccountName: $(params.deployer-sa)
               volumes:
               - name: config-volume
                 configMap:
-                  name: cloud-pak-deployer-config
+                  name: $(params.configmap)
               - name: status-volume
                 persistentVolumeClaim:
                   claimName: $(params.status-pvc)
