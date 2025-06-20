@@ -26,7 +26,7 @@ spec:
     - name: deployer-pvc
       type: string
       default: cloud-pak-deployer-pvc
-    - name: overrides
+    - name: override_url
       type: string
   workspaces:
     - name: shared-configuration
@@ -114,8 +114,8 @@ spec:
         kind: Task
         name: prepare-cp4d-configmap
       params:
-        - name: overrides
-          value: $(params.overrides)
+        - name: override_url
+          value: $(params.override_url)
       workspaces:
         - name: shared-workspace
           workspace: shared-configuration

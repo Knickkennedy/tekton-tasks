@@ -4,8 +4,9 @@ metadata:
   name: prepare-cp4d-configmap
 spec:
   params:
-    - name: overrides
+    - name: override_url
       type: string
+      description: The url of the override_url yaml to apply for yq
   workspaces:
     - name: shared-workspace
   results:
@@ -16,7 +17,8 @@ spec:
       image: alpine/git
       workingDir: $(workspaces.shared-workspace.path)
       script: |
-        git clone https://github.com/itz-public/k8s-manifests.git $(workspaces.shared-workspace.path)/repo
+        wget https://raw.githubusercontent.com/itz-public/k8s-manifests/refs/heads/main/cloud-pak-deployer/cp4d/cp4d.yaml -P $(workspaces.shared-workspace.path)/cp4d.yaml
+        wget $(params.override_url) -O $(workspaces.shared-workspace.path)/overrides.yaml
     - name: apply-overrides
       image: mikefarah/yq:4.45.4
       workingDir: $(workspaces.shared-workspace.path)
@@ -24,8 +26,8 @@ spec:
         runAsUser: 0
       script: |
         #!/bin/sh
-        export BASE=$(workspaces.shared-workspace.path)/repo/cloud-pak-deployer/cp4d/cp4d.yaml
-        echo "$(params.overrides)" > /tmp/overrides.yaml
+        export BASE=$(workspaces.shared-workspace.path)/cp4d.yaml
+        export OVERRIDE=$(workspaces.shared-workspace.path)/overrides.yaml
 
         yq ea '
           select(fileIndex == 0) as $base |
@@ -50,6 +52,6 @@ spec:
           ) |
 
           $base
-        ' "$BASE" /tmp/overrides.yaml > $(workspaces.shared-workspace.path)/cp4d.yaml
+        ' "$BASE" "$OVERRIDE" > $(workspaces.shared-workspace.path)/cp4d.yaml
         echo "Final merged YAML written to: $(workspaces.shared-workspace.path)/cp4d.yaml"
         echo "$(workspaces.shared-workspace.path)/cp4d.yaml" > $(results.output-file.path)
