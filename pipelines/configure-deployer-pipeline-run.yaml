@@ -7,6 +7,10 @@ spec:
   pipelineRef:
     name: configure-deployer
   params:
+    - name: cloud-pak-deployer-version
+      value: latest
+    - name: cp4d-version
+      value: "5.2.0"
     - name: deployer-namespace
       value: cloud-pak-deployer
     - name: deployer-sa
@@ -21,8 +25,6 @@ spec:
       value: ocs-external-storagecluster-ceph-rbd
     - name: deployer-pvc
       value: cloud-pak-deployer-pvc
-    - name: override_url
-      value: https://raw.githubusercontent.com/itz-public/k8s-manifests/refs/heads/main/cloud-pak-deployer/cp4d/minimal.yaml
   workspaces:
     - name: shared-configuration
       volumeClaimTemplate:
