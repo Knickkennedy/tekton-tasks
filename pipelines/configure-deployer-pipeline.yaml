@@ -184,3 +184,21 @@ spec:
           value: $(params.deployer-pvc)
         - name: deployer-sa
           value: $(params.deployer-sa)
+  finally:
+    - name: update-configmap-success
+      when:
+        - input: $(tasks.run-cloud-pak-deployer.status)
+          operator: in
+          values: ["Succeeded"]
+      taskSpec:
+        steps:
+          - name: update-configmap-success
+            image: docker.io/knickkennedy/k8s-tools@sha256:542002707d909d25b3ed05654f77c514a507b1fc916ad3d44adb5a672adb4299
+            script: |
+              cpd_route=$(oc get route cpd -n cpd --template='{{ .spec.host }}')
+              echo "Console Route: $cpd_route"
+              initial_admin_password=$(oc get secret admin-user-details -n cpd -o               jsonpath='{.data.initial_admin_password}' | base64 -d)
+              echo "Username: admin"
+              echo "Password: $initial_admin_password"
+              oc patch configmap/pipeline-output -p "{\"data\":{\"Status\":\"Pipeline run Successful\",\"CP4D-Console-              Route\":\"${cpd_route}\",\"CP4D-Initial-Admin-Username\":\"admin\",\"CP4D-Initial-Admin-
+              Password\":\"${initial_admin_password}\"}}"
