@@ -124,6 +124,10 @@ spec:
           value: $(params.cp4d-version)
         - name: override_url
           value: $(params.override_url)
+        - name: file-storage
+          value: $(params.file-storage)
+        - name: block-storage
+          value: $(params.block-storage)
       workspaces:
         - name: shared-workspace
           workspace: shared-configuration
