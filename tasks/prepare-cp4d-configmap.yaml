@@ -7,18 +7,62 @@ spec:
     - name: override_url
       type: string
       description: The url of the override_url yaml to apply for yq
+    - name: file-storage
+      type: string
+      default: ocs-external-storagecluster-cephfs
+      description: File storage class name
+    - name: block-storage
+      type: string
+      default: ocs-external-storagecluster-ceph-rbd
+      description: Block storage class name
   workspaces:
     - name: shared-workspace
   results:
     - name: output-file
       description: the final file created by this fetch and override
   steps:
-    - name: clone-repo
+    - name: create-base-config
       image: alpine/git
       workingDir: $(workspaces.shared-workspace.path)
       script: |
-        wget -O $(workspaces.shared-workspace.path)/base.yaml https://raw.githubusercontent.com/itz-public/k8s-manifests/refs/heads/main/cloud-pak-deployer/cp4d/cp4d.yaml
-        wget -O $(workspaces.shared-workspace.path)/overrides.yaml $(params.override_url)
+        cat > $(workspaces.shared-workspace.path)/base.yaml << 'EOF'
+        global_config:
+          environment_name: demo
+          cloud_platform: existing-ocp
+          confirm_destroy:
+        openshift:
+          - name: cpd-demo
+            ocp_version: 4.18
+            cluster_name: cpd-demo
+            domain_name: example.com
+            openshift_storage:
+              - storage_name: $(params.file-storage)
+                storage_type: custom
+                ocp_storage_class_file: $(params.file-storage)
+                ocp_storage_class_block: $(params.block-storage)
+        cp4d:
+          - project: cpd
+            openshift_cluster_name: "cpd-demo"
+            cp4d_version: 5.2.1
+            cp4d_entitlement:
+              - cpd-enterprise
+            cp4d_production_license: True
+            accept_licenses: true
+            state: installed
+            cartridges:
+              - name: cp-foundation
+              - name: lite
+              - name: ws
+                description: Watson Studio
+                state: installed
+        EOF
+
+        # Download overrides if URL provided
+        if [ -n "$(params.override_url)" ]; then
+          wget -O $(workspaces.shared-workspace.path)/overrides.yaml $(params.override_url)
+        else
+          echo "{}" > $(workspaces.shared-workspace.path)/overrides.yaml
+        fi
     - name: apply-overrides
       image: mikefarah/yq:4.45.4
       workingDir: $(workspaces.shared-workspace.path)
@@ -28,6 +72,10 @@ spec:
         #!/bin/sh
         export BASE=$(workspaces.shared-workspace.path)/base.yaml
         export OVERRIDE=$(workspaces.shared-workspace.path)/overrides.yaml
+
+        # Replace storage class placeholders with actual values
+        sed -i "s/\$(params.file-storage)/$(params.file-storage)/g" "$BASE"
+        sed -i "s/\$(params.block-storage)/$(params.block-storage)/g" "$BASE"
 
         yq ea '
           select(fileIndex == 0) as $base |
